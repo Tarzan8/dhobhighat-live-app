@@ -247,6 +247,32 @@ export default function App() {
         }
     };
 
+    const callGeminiAPI = async (prompt) => {
+        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+        const apiKey = process.env.REACT_APP_GEMINI_API_KEY; // This will be handled by Netlify
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                throw new Error(`API call failed with status: ${response.status}`);
+            }
+            const result = await response.json();
+            if (result.candidates && result.candidates.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                return "Sorry, couldn't get a response. Please try again.";
+            }
+        } catch (error) {
+            console.error("Gemini API error:", error);
+            return "Error connecting to the AI service. Please check your connection.";
+        }
+    };
+
     const handleGenerateMessage = async (order) => {
         setOrderForMessage(order);
         setIsGenerating(true);
@@ -258,19 +284,10 @@ export default function App() {
         - Items: ${itemList}
         - Shop Name: Dhobighat
         Do not use any special characters or formatting. Just plain text.`;
-        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-        const apiKey = "";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-        try {
-            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            const result = await response.json();
-            if (result.candidates && result.candidates.length > 0) {
-                setGeneratedMessage(result.candidates[0].content.parts[0].text);
-            } else { setGeneratedMessage("Sorry, couldn't generate a message. Please try again."); }
-        } catch (error) {
-            console.error("Gemini API error:", error);
-            setGeneratedMessage("Error connecting to the AI service. Please check your connection.");
-        } finally { setIsGenerating(false); }
+        
+        const message = await callGeminiAPI(prompt);
+        setGeneratedMessage(message);
+        setIsGenerating(false);
     };
     
     const handleViewHistory = (client) => {
@@ -380,7 +397,7 @@ export default function App() {
             {isConfirmModalOpen && <ConfirmDeleteModal t={t} onConfirm={confirmDeleteOrder} onClose={() => setIsConfirmModalOpen(false)} />}
             {isMessageModalOpen && <GeneratedMessageModal t={t} order={orderForMessage} message={generatedMessage} isLoading={isGenerating} onClose={() => setIsMessageModalOpen(false)} />}
             {isHistoryModalOpen && <ClientHistoryModal client={selectedClient} orders={orders} t={t} formatDate={formatDate} onClose={() => setIsHistoryModalOpen(false)} />}
-            {isStainModalOpen && <StainAdvisorModal t={t} onClose={() => setIsStainModalOpen(false)} />}
+            {isStainModalOpen && <StainAdvisorModal t={t} callGeminiAPI={callGeminiAPI} onClose={() => setIsStainModalOpen(false)} />}
         </div>
     );
 }
@@ -750,7 +767,7 @@ function GeneratedMessageModal({ t, order, message, isLoading, onClose }) {
 }
 
 // --- Stain Advisor Modal ---
-function StainAdvisorModal({ t, onClose }) {
+function StainAdvisorModal({ t, callGeminiAPI, onClose }) {
     const [stainType, setStainType] = useState('');
     const [fabricType, setFabricType] = useState('');
     const [advice, setAdvice] = useState('');
@@ -766,24 +783,9 @@ function StainAdvisorModal({ t, onClose }) {
         
         const prompt = `You are an expert dry cleaner in India. Provide professional, step-by-step instructions for treating a ${stainType} stain on a ${fabricType} garment. The instructions should be clear, concise, and safe for the fabric. Use simple language.`;
         
-        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-        const apiKey = "";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-        try {
-            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            const result = await response.json();
-            if (result.candidates && result.candidates.length > 0) {
-                setAdvice(result.candidates[0].content.parts[0].text);
-            } else {
-                setAdvice("Sorry, couldn't get advice for this combination. Please try again.");
-            }
-        } catch (error) {
-            console.error("Gemini API error:", error);
-            setAdvice("Error connecting to the AI service. Please check your connection.");
-        } finally {
-            setIsGenerating(false);
-        }
+        const result = await callGeminiAPI(prompt);
+        setAdvice(result);
+        setIsGenerating(false);
     };
 
     return (
