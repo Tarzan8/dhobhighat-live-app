@@ -9,6 +9,11 @@
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1"
   },
+  "devDependencies": {
+    "tailwindcss": "^3.3.5",
+    "postcss": "^8.4.24",
+    "autoprefixer": "^10.4.14"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "CI=false react-scripts build",
