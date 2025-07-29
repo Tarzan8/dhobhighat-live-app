@@ -223,14 +223,12 @@ export default function App() {
     const [generatedMessage, setGeneratedMessage] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // --- MOVED THIS HOOK TO THE TOP LEVEL ---
     const filteredOrders = useMemo(() => {
         return orders
             .filter(order => order.status === activeTab)
             .sort((a, b) => (b.invoiceNumber || 0) - (a.invoiceNumber || 0));
     }, [orders, activeTab]);
 
-    // --- Authentication and Firebase Initialization ---
     useEffect(() => {
         if (localStorage.getItem('dhobighat_auth_token') === 'verified') {
             setIsAuthenticated(true);
@@ -255,7 +253,6 @@ export default function App() {
         } catch (error) { console.error("Firebase initialization error:", error); }
     }, []);
 
-    // --- Data Fetching ---
     useEffect(() => {
         if (!isAuthReady || !db || !isAuthenticated) return;
         const ordersCollectionPath = `artifacts/${appId}/public/data/orders`;
@@ -316,27 +313,23 @@ export default function App() {
     };
 
     const callGeminiAPI = async (prompt) => {
-        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-        const apiKey = process.env.REACT_APP_GEMINI_API_KEY; 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
         try {
-            const response = await fetch(apiUrl, {
+            const response = await fetch('/.netlify/functions/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ prompt }),
             });
+
             if (!response.ok) {
-                throw new Error(`API call failed with status: ${response.status}`);
+                const err = await response.text();
+                throw new Error(`Function call failed: ${err}`);
             }
+
             const result = await response.json();
-            if (result.candidates && result.candidates.length > 0) {
-                return result.candidates[0].content.parts[0].text;
-            } else {
-                return "Sorry, couldn't get a response. Please try again.";
-            }
+            return result.text;
+
         } catch (error) {
-            console.error("Gemini API error:", error);
+            console.error("Gemini function error:", error);
             return "Error connecting to the AI service. Please check your connection.";
         }
     };
