@@ -344,7 +344,7 @@ function DhobighatApp({ t, toggleLanguage }) {
 
     const formatDate = (timestamp) => {
         if (!timestamp || !timestamp.seconds) return 'N/A';
-        return new Date(timestamp.seconds * 1000).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-GB');
+        return new Date(timestamp.seconds * 1000).toLocaleString(t.title === "धोबीघाट लॉन्ड्री ट्रैकर" ? 'hi-IN' : 'en-GB');
     };
 
     const downloadCSV = (data, filename) => {
@@ -461,7 +461,7 @@ export default function AppWrapper() {
         return <PinScreen t={t} onPinSuccess={() => setIsAuthenticated(true)} />;
     }
 
-    return <DhobighatApp lang={lang} t={t} toggleLanguage={toggleLanguage} />;
+    return <DhobighatApp t={t} toggleLanguage={toggleLanguage} />;
 }
 
 
@@ -817,4 +817,72 @@ function GeneratedMessageModal({ t, order, message, isLoading, onClose }) {
                      <a href={`https://wa.me/${whatsappNumber}?text=${encodedMessage}`}
                        target="_blank"
                        rel="noopener noreferrer"
-                       className={`w-full text-center bg-green-500 text-white font-b
+                       className={`w-full text-center bg-green-500 text-white font-bold text-md py-3 px-4 rounded-lg shadow-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2 ${isLoading || !message ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                       <MessageCircle size={18}/> {t.sendWhatsApp}
+                    </a>
+                    <button onClick={handleCopy} disabled={isLoading || !message} className="w-full bg-gray-500 text-white font-bold text-md py-3 px-4 rounded-lg shadow-lg hover:bg-gray-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                        <Clipboard size={18} />
+                        {copied ? t.copied : t.copy}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// --- Stain Advisor Modal ---
+function StainAdvisorModal({ t, callGeminiAPI, onClose }) {
+    const [stainType, setStainType] = useState('');
+    const [fabricType, setFabricType] = useState('');
+    const [advice, setAdvice] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const handleGetAdvice = async () => {
+        if (!stainType || !fabricType) {
+            alert("Please enter both stain and fabric type.");
+            return;
+        }
+        setIsGenerating(true);
+        setAdvice('');
+        
+        const languageInstruction = t.title === "धोबीघाट लॉन्ड्री ट्रैकर" 
+            ? "Provide the instructions in Hindi." 
+            : "Provide the instructions in English.";
+
+        const prompt = `You are an expert dry cleaner in India. Provide professional, step-by-step instructions for treating a ${stainType} stain on a ${fabricType} garment. The instructions should be clear, concise, and safe for the fabric. Use simple language. ${languageInstruction}`;
+        
+        const result = await callGeminiAPI(prompt);
+        setAdvice(result);
+        setIsGenerating(false);
+    };
+
+    return (
+        <div id="modal-backdrop" className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={(e) => { if (e.target.id === 'modal-backdrop') onClose();}}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative">
+                 <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X size={28} /></button>
+                 <h2 className="text-3xl font-bold text-center mb-4 text-cyan-600 flex items-center justify-center gap-2">
+                    <Droplet />
+                    {t.stainAdvisor}
+                </h2>
+                <div className="space-y-4">
+                    <input type="text" value={stainType} onChange={e => setStainType(e.target.value)} placeholder={t.stainType} className="w-full p-3 border-2 border-gray-300 rounded-lg text-lg" />
+                    <input type="text" value={fabricType} onChange={e => setFabricType(e.target.value)} placeholder={t.fabricType} className="w-full p-3 border-2 border-gray-300 rounded-lg text-lg" />
+                    <button onClick={handleGetAdvice} disabled={isGenerating} className="w-full bg-cyan-500 text-white font-bold text-xl py-3 px-6 rounded-lg shadow-lg hover:bg-cyan-600 transition-colors disabled:bg-gray-400">
+                        {isGenerating ? t.generating : t.getAdvice}
+                    </button>
+                </div>
+                { (advice || isGenerating) &&
+                    <div className="bg-gray-100 rounded-lg p-4 my-4 min-h-[150px] whitespace-pre-wrap text-md">
+                        {isGenerating ? (
+                            <div className="flex justify-center items-center h-full">
+                                <p className="text-gray-500 animate-pulse">{t.generating}</p>
+                            </div>
+                        ) : (
+                            advice
+                        )}
+                    </div>
+                }
+            </div>
+        </div>
+    );
+}
