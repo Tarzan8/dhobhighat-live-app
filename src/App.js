@@ -223,9 +223,15 @@ export default function App() {
     const [generatedMessage, setGeneratedMessage] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
+    // --- MOVED THIS HOOK TO THE TOP LEVEL ---
+    const filteredOrders = useMemo(() => {
+        return orders
+            .filter(order => order.status === activeTab)
+            .sort((a, b) => (b.invoiceNumber || 0) - (a.invoiceNumber || 0));
+    }, [orders, activeTab]);
+
     // --- Authentication and Firebase Initialization ---
     useEffect(() => {
-        // Check if PIN is already verified
         if (localStorage.getItem('dhobighat_auth_token') === 'verified') {
             setIsAuthenticated(true);
         }
@@ -395,12 +401,6 @@ export default function App() {
         ];
         downloadCSV(csvRows.join('\r\n'), 'dhobhighat_all_orders.csv');
     };
-
-    const filteredOrders = useMemo(() => {
-        return orders
-            .filter(order => order.status === activeTab)
-            .sort((a, b) => (b.invoiceNumber || 0) - (a.invoiceNumber || 0));
-    }, [orders, activeTab]);
 
     return (
         <div className="bg-gray-100 min-h-screen font-sans text-black">
