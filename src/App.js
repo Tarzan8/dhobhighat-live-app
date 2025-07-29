@@ -249,7 +249,7 @@ export default function App() {
 
     const callGeminiAPI = async (prompt) => {
         const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-        const apiKey = process.env.REACT_APP_GEMINI_API_KEY; // This will be handled by Netlify
+        const apiKey = process.env.REACT_APP_GEMINI_API_KEY; 
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
         try {
@@ -664,9 +664,9 @@ function ClientHistoryModal({ client, orders, t, formatDate, onClose }) {
     }, [orders, client]);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+        <div id="modal-backdrop" className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={(e) => { if (e.target.id === 'modal-backdrop') onClose();}}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-                <div className="p-6 border-b">
+                <div className="p-6 border-b relative">
                     <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X size={28} /></button>
                     <h2 className="text-3xl font-bold text-center text-indigo-600">{t.clientHistory}</h2>
                     <p className="text-center text-xl font-semibold">{client.clientName}</p>
@@ -698,8 +698,9 @@ function ClientHistoryModal({ client, orders, t, formatDate, onClose }) {
 // --- Confirmation Modal Component ---
 function ConfirmDeleteModal({ t, onConfirm, onClose }) {
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
+        <div id="modal-backdrop" className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={(e) => { if (e.target.id === 'modal-backdrop') onClose();}}>
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center relative">
+                <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X size={24} /></button>
                 <h2 className="text-2xl font-bold mb-4">{t.areYouSure}</h2>
                 <p className="text-gray-600 mb-6">{t.confirmDelete}</p>
                 <div className="flex justify-center gap-4">
@@ -733,7 +734,7 @@ function GeneratedMessageModal({ t, order, message, isLoading, onClose }) {
     const whatsappNumber = phoneNumber.startsWith('91') ? phoneNumber : `91${phoneNumber}`;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+        <div id="modal-backdrop" className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={(e) => { if (e.target.id === 'modal-backdrop') onClose();}}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative">
                  <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X size={28} /></button>
                  <h2 className="text-3xl font-bold text-center mb-4 text-purple-600 flex items-center justify-center gap-2">
@@ -789,7 +790,7 @@ function StainAdvisorModal({ t, callGeminiAPI, onClose }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+        <div id="modal-backdrop" className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={(e) => { if (e.target.id === 'modal-backdrop') onClose();}}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative">
                  <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X size={28} /></button>
                  <h2 className="text-3xl font-bold text-center mb-4 text-cyan-600 flex items-center justify-center gap-2">
