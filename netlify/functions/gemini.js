@@ -1,4 +1,3 @@
-// This is our secure "middleman" function
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -6,7 +5,7 @@ exports.handler = async function (event) {
 
   try {
     const { prompt } = JSON.parse(event.body);
-    const apiKey = process.env.REACT_APP_GEMINI_API_KEY; // Securely gets the key
+    const apiKey = process.env.GEMINI_API_KEY; // This is the CORRECT key name
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const payload = {
@@ -21,6 +20,7 @@ exports.handler = async function (event) {
 
     if (!response.ok) {
       const errorBody = await response.text();
+      console.error("Gemini API Error:", errorBody);
       return { statusCode: response.status, body: `Gemini API Error: ${errorBody}` };
     }
 
@@ -33,6 +33,7 @@ exports.handler = async function (event) {
       return { statusCode: 500, body: JSON.stringify({ error: "Sorry, couldn't get a response from the AI." }) };
     }
   } catch (error) {
+    console.error("Serverless function error:", error);
     return { statusCode: 500, body: JSON.stringify({ error: 'Error connecting to the AI service.' }) };
   }
 };
