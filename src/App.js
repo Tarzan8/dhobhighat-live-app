@@ -782,7 +782,11 @@ function StainAdvisorModal({ t, callGeminiAPI, onClose }) {
         setIsGenerating(true);
         setAdvice('');
         
-        const prompt = `You are an expert dry cleaner in India. Provide professional, step-by-step instructions for treating a ${stainType} stain on a ${fabricType} garment. The instructions should be clear, concise, and safe for the fabric. Use simple language.`;
+        const languageInstruction = t.title === "धोबीघाट लॉन्ड्री ट्रैकर" 
+            ? "Provide the instructions in Hindi." 
+            : "Provide the instructions in English.";
+
+        const prompt = `You are an expert dry cleaner in India. Provide professional, step-by-step instructions for treating a ${stainType} stain on a ${fabricType} garment. The instructions should be clear, concise, and safe for the fabric. Use simple language. ${languageInstruction}`;
         
         const result = await callGeminiAPI(prompt);
         setAdvice(result);
