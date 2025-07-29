@@ -2,7 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, getDocs, onSnapshot, query, where, updateDoc, deleteDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
-import { Search, Plus, Trash2, CheckCircle, Languages, X, Clipboard, MessageSquareText, Download, History, DollarSign, Package, PackageCheck, Send, MessageCircle, Droplet } from 'lucide-react';
+import { Search, Plus, Trash2, CheckCircle, Languages, X, Clipboard, MessageSquareText, Download, History, DollarSign, Package, PackageCheck, Send, MessageCircle, Droplet, LockKeyhole } from 'lucide-react';
+
+// --- App Configuration ---
+// IMPORTANT: Change this to your own secret PIN!
+const CORRECT_PIN = "5678";
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
@@ -78,6 +82,9 @@ const translations = {
         fabricType: "Fabric Type (e.g., Cotton, Silk)",
         getAdvice: "Get Advice",
         stainRemovalAdvice: "Stain Removal Advice",
+        enterPin: "Enter PIN to Access",
+        unlock: "Unlock",
+        incorrectPin: "Incorrect PIN. Please try again.",
     },
     hi: {
         title: "धोबीघाट लॉन्ड्री ट्रैकर",
@@ -140,16 +147,62 @@ const translations = {
         fabricType: "कपड़े का प्रकार (जैसे, कपास, रेशम)",
         getAdvice: "सलाह लें",
         stainRemovalAdvice: "दाग हटाने की सलाह",
+        enterPin: "एक्सेस करने के लिए पिन दर्ज करें",
+        unlock: "अनलॉक",
+        incorrectPin: "गलत पिन। कृपया पुन: प्रयास करें।",
     }
 };
 
 const appId = 'dhobhighat-app-default';
+
+// --- PIN Screen Component ---
+const PinScreen = ({ t, onPinSuccess }) => {
+    const [pin, setPin] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (pin === CORRECT_PIN) {
+            localStorage.setItem('dhobighat_auth_token', 'verified');
+            onPinSuccess();
+        } else {
+            setError(t.incorrectPin);
+            setPin('');
+        }
+    };
+
+    return (
+        <div className="bg-gray-100 min-h-screen flex items-center justify-center">
+            <div className="w-full max-w-sm p-8 bg-white rounded-2xl shadow-xl">
+                <div className="text-center">
+                    <LockKeyhole className="mx-auto text-blue-500" size={48} />
+                    <h1 className="text-2xl font-bold mt-4">{t.enterPin}</h1>
+                </div>
+                <form onSubmit={handleSubmit} className="mt-6">
+                    <input
+                        type="password"
+                        value={pin}
+                        onChange={(e) => setPin(e.target.value)}
+                        maxLength="4"
+                        className="w-full p-4 text-center text-2xl tracking-[1rem] border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                        autoFocus
+                    />
+                    {error && <p className="text-red-500 text-center mt-2">{error}</p>}
+                    <button type="submit" className="w-full mt-6 bg-blue-500 text-white font-bold text-lg py-3 rounded-lg shadow-lg hover:bg-blue-600 transition-colors">
+                        {t.unlock}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
 
 // --- Main App Component ---
 export default function App() {
     const [lang, setLang] = useState('en');
     const t = useMemo(() => translations[lang], [lang]);
 
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [db, setDb] = useState(null);
     const [userId, setUserId] = useState(null);
     const [isAuthReady, setIsAuthReady] = useState(false);
@@ -170,8 +223,13 @@ export default function App() {
     const [generatedMessage, setGeneratedMessage] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // --- Firebase Initialization ---
+    // --- Authentication and Firebase Initialization ---
     useEffect(() => {
+        // Check if PIN is already verified
+        if (localStorage.getItem('dhobighat_auth_token') === 'verified') {
+            setIsAuthenticated(true);
+        }
+
         try {
             const app = initializeApp(firebaseConfig);
             const firestore = getFirestore(app);
@@ -193,7 +251,7 @@ export default function App() {
 
     // --- Data Fetching ---
     useEffect(() => {
-        if (!isAuthReady || !db) return;
+        if (!isAuthReady || !db || !isAuthenticated) return;
         const ordersCollectionPath = `artifacts/${appId}/public/data/orders`;
         const qOrders = query(collection(db, ordersCollectionPath));
         const unsubscribeOrders = onSnapshot(qOrders, (snapshot) => {
@@ -212,8 +270,12 @@ export default function App() {
             unsubscribeOrders();
             unsubscribeClients();
         };
-    }, [isAuthReady, db]);
+    }, [isAuthReady, db, isAuthenticated]);
     
+    if (!isAuthenticated) {
+        return <PinScreen t={t} onPinSuccess={() => setIsAuthenticated(true)} />;
+    }
+
     const toggleLanguage = () => setLang(currentLang => currentLang === 'en' ? 'hi' : 'en');
 
     const handleMarkAsDelivered = async (orderId) => {
