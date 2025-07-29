@@ -198,7 +198,7 @@ const PinScreen = ({ t, onPinSuccess }) => {
 };
 
 // --- Main Application Component (Contains all logic) ---
-function DhobighatApp({ lang, t, toggleLanguage }) {
+function DhobighatApp({ t, toggleLanguage }) {
     const [db, setDb] = useState(null);
     const [userId, setUserId] = useState(null);
     const [isAuthReady, setIsAuthReady] = useState(false);
@@ -344,7 +344,7 @@ function DhobighatApp({ lang, t, toggleLanguage }) {
 
     const formatDate = (timestamp) => {
         if (!timestamp || !timestamp.seconds) return 'N/A';
-        return new Date(timestamp.seconds * 1000).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-GB');
+        return new Date(timestamp.seconds * 1000).toLocaleString(t.title === "धोबीघाट लॉन्ड्री ट्रैकर" ? 'hi-IN' : 'en-GB');
     };
 
     const downloadCSV = (data, filename) => {
@@ -461,7 +461,7 @@ export default function App() {
         return <PinScreen t={t} onPinSuccess={() => setIsAuthenticated(true)} />;
     }
 
-    return <DhobighatApp lang={lang} t={t} toggleLanguage={toggleLanguage} />;
+    return <DhobighatApp t={t} toggleLanguage={toggleLanguage} />;
 }
 
 
